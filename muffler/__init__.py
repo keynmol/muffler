@@ -52,7 +52,7 @@ class Quiet(Option):
         return ""
 
 
-class Value(Option):
+class Placeholder(Option):
 
     def format(self, value):
         return value
@@ -87,7 +87,7 @@ def parametrize(options, command_template):
         value_options = {}
         for (option, value) in combination:
             classes = classes_mapping[option.class_name()]
-            if "Value" in classes:
+            if "Placeholder" in classes:
                 value_options[option.name] = option.format(value)
             else:
                 for class_name in classes:
