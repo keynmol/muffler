@@ -2,6 +2,7 @@ from collections import defaultdict
 
 
 class Option:
+    JOIN = " "
 
     def __init__(self, name, values):
         self.name = name
@@ -18,6 +19,9 @@ class Option:
 
     def format(self, value):
         ""
+
+    def joiner(self):
+        return " "
 
     def classes():
         stack = [Option]
@@ -81,11 +85,14 @@ def parametrize(options, command_template):
     classes_mapping = Option.closure(Option.classes())
 
     all_combinations = combinations(options)
+    joiners = {'Option': " "}
     for combination in all_combinations:
         args = defaultdict(list)
         parameters = {}
         value_options = {}
         for (option, value) in combination:
+            joiners[option.__class__.__name__] = option.joiner()
+            
             classes = classes_mapping[option.class_name()]
             if "Placeholder" in classes:
                 value_options[option.name] = option.format(value)
@@ -98,6 +105,6 @@ def parametrize(options, command_template):
 
             parameters[option.transform_name()] = option.transform_value(value)
 
-        args = dict((k, ' '.join(a for a in v if a is not None)) for k, v in args.items())
+        args = dict((k, joiners[k].join(a for a in v if a is not None)) for k, v in args.items())
         args.update(value_options)
         yield (parameters, command_template.format(**args))
