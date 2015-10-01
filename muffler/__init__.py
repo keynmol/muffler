@@ -85,7 +85,10 @@ def parametrize(options, command_template):
     classes_mapping = Option.closure(Option.classes())
 
     all_combinations = combinations(options)
+    num_combinations = len(all_combinations)
+    
     joiners = {'Option': " "}
+    i = 0
     for combination in all_combinations:
         args = defaultdict(list)
         parameters = {}
@@ -107,4 +110,5 @@ def parametrize(options, command_template):
 
         args = dict((k, joiners[k].join(a for a in v if a is not None)) for k, v in args.items())
         args.update(value_options)
-        yield (parameters, command_template.format(**args))
+        i +=1
+        yield (parameters, command_template.format(**args), i, num_combinations)
