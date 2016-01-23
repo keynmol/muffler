@@ -2,7 +2,6 @@ from collections import defaultdict
 
 
 class Option:
-    JOIN = " "
 
     def __init__(self, name, values):
         self.name = name
@@ -66,7 +65,7 @@ def parameters_names(options):
     return [opt.transform_name() for opt in options]
 
 
-def parametrize(options, command_template):
+def parametrize(options, command_template, progress=True):
     def combinations(options):
         if len(options) == 0:
             return []
@@ -86,7 +85,7 @@ def parametrize(options, command_template):
 
     all_combinations = combinations(options)
     num_combinations = len(all_combinations)
-    
+
     joiners = {'Option': " "}
     i = 0
     for combination in all_combinations:
@@ -95,7 +94,7 @@ def parametrize(options, command_template):
         value_options = {}
         for (option, value) in combination:
             joiners[option.__class__.__name__] = option.joiner()
-            
+
             classes = classes_mapping[option.class_name()]
             if "Placeholder" in classes:
                 value_options[option.name] = option.format(value)
@@ -108,7 +107,19 @@ def parametrize(options, command_template):
 
             parameters[option.transform_name()] = option.transform_value(value)
 
-        args = dict((k, joiners[k].join(a for a in v if a is not None)) for k, v in args.items())
+        def get_joiner(k):
+            if k in joiners:
+                return joiners[k]
+            candidates = classes_mapping[k]
+            for c in candidates:
+                if c in joiners:
+                    return joiners[c]
+
+        args = dict((k, get_joiner(k).join(a for a in v if a is not None))
+                    for k, v in args.items())
         args.update(value_options)
-        i +=1
-        yield (parameters, command_template.format(**args), i, num_combinations)
+        i += 1
+        if progress:
+            yield (parameters, command_template.format(**args), i, num_combinations)
+        else:
+            yield (parameters, command_template.format(**args))
